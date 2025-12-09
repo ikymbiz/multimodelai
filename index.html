@@ -5,21 +5,140 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi-Model AI Chat</title>
     <style>
-        /* デザインは変更なし（省略して既存のCSSを適用してください） */
-        :root { --bg-color: #131314; --sidebar-bg: #1e1f20; --text-color: #e3e3e3; --input-bg: #282a2c; --user-msg-bg: #004a77; --ai-msg-bg: #282a2c; --accent: #a8c7fa; --danger: #ff8b8b; }
-        body { margin: 0; font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; height: 100vh; }
-        .sidebar { width: 260px; background-color: var(--sidebar-bg); padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid #444; overflow-y: auto; }
+        :root {
+            --bg-color: #131314;
+            --sidebar-bg: #1e1f20;
+            --text-color: #e3e3e3;
+            --input-bg: #282a2c;
+            --user-msg-bg: #004a77;
+            --ai-msg-bg: #282a2c;
+            --accent: #a8c7fa;
+            --danger: #ff8b8b;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden; /* 全体のスクロールを防ぐ */
+        }
+
+        /* Sidebar (Settings) */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border-right: 1px solid #444;
+            overflow-y: auto;
+            
+            /* ★追加: アニメーション設定 */
+            transition: all 0.3s ease;
+            white-space: nowrap; /* 閉じる時に文字が改行されるのを防ぐ */
+        }
+
+        /* ★追加: 折りたたみ時のスタイル */
+        .sidebar.collapsed {
+            width: 0;
+            padding-left: 0;
+            padding-right: 0;
+            border-right: none;
+            opacity: 0;
+            pointer-events: none; /* 隠れているときはクリック不可に */
+        }
+
         .sidebar h2 { font-size: 1.2rem; margin-top: 0; }
+        
         label { font-size: 0.8rem; color: #aaa; margin-bottom: 5px; display: block; }
-        input[type="text"], input[type="password"], select { width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid #444; color: white; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
-        .file-upload-label { display: inline-block; padding: 8px 12px; background: #333; border: 1px dashed #666; border-radius: 8px; cursor: pointer; text-align: center; font-size: 0.8rem; color: var(--accent); margin-bottom: 10px; }
+        input[type="text"], input[type="password"], select {
+            width: 100%;
+            padding: 10px;
+            background: var(--input-bg);
+            border: 1px solid #444;
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        .file-upload-label {
+            display: inline-block;
+            padding: 8px 12px;
+            background: #333;
+            border: 1px dashed #666;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
         .file-upload-label:hover { background: #444; }
         input[type="file"] { display: none; }
-        #clear-btn { background-color: transparent; border: 1px solid var(--danger); color: var(--danger); padding: 8px; border-radius: 8px; cursor: pointer; margin-top: 20px; width: 100%; }
-        #clear-btn:hover { background-color: rgba(255, 139, 139, 0.1); }
-        .main-chat { flex: 1; display: flex; flex-direction: column; position: relative; }
-        .chat-container { flex: 1; overflow-y: auto; padding: 20px 20%; display: flex; flex-direction: column; gap: 20px; }
-        @media (max-width: 768px) { .chat-container { padding: 20px 5%; } .sidebar { width: 220px; } .input-area { padding: 20px 5%; } }
+
+        #clear-btn {
+            background-color: transparent;
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        /* Main Chat Area */
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            min-width: 0; /* フレックスアイテムの縮小を許可 */
+        }
+
+        /* ★追加: サイドバー切り替えボタン */
+        #toggle-sidebar-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 100;
+            background: transparent;
+            border: none;
+            color: #aaa;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            line-height: 1;
+        }
+        #toggle-sidebar-btn:hover { color: white; }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 20%;
+            padding-top: 60px; /* ★変更: ボタンと重ならないよう上部に余白 */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .chat-container { padding: 20px 5%; padding-top: 60px; }
+            /* スマホでサイドバーが開いている時は全画面覆う */
+            .sidebar { 
+                position: absolute; 
+                z-index: 200; 
+                height: 100%; 
+                width: 260px;
+            }
+            .sidebar.collapsed { width: 0; }
+        }
+
         .message { display: flex; gap: 15px; line-height: 1.6; }
         .message.user { justify-content: flex-end; }
         .bubble { padding: 12px 18px; border-radius: 18px; max-width: 80%; white-space: pre-wrap; }
@@ -27,6 +146,7 @@
         .message.ai .bubble { background-color: var(--ai-msg-bg); border-bottom-left-radius: 4px; }
         .icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; flex-shrink: 0; }
         .icon.ai { background: var(--accent); color: #000; }
+
         .input-area { padding: 20px 20%; background-color: var(--bg-color); }
         .input-wrapper { background: var(--input-bg); border-radius: 25px; padding: 10px 20px; display: flex; align-items: center; }
         textarea { flex: 1; background: transparent; border: none; color: white; resize: none; height: 24px; font-size: 1rem; outline: none; }
@@ -36,7 +156,7 @@
 </head>
 <body>
 
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
         <h2>設定</h2>
         
         <label>プロバイダー & モデル</label>
@@ -65,6 +185,8 @@
     </aside>
 
     <main class="main-chat">
+        <button id="toggle-sidebar-btn">☰</button>
+
         <div class="chat-container" id="chat-container"></div>
 
         <div class="input-area">
@@ -77,7 +199,6 @@
 
     <script type="module">
         import { promptRegistry } from './prompt.js';
-        // ★追加: models.js をインポート
         import { modelList } from './models.js';
         import { callGemini, callOpenAI, callClaude } from './api_client.js';
 
@@ -89,6 +210,10 @@
         const clearBtn = document.getElementById('clear-btn');
         const fileUpload = document.getElementById('file-upload');
         
+        // ★追加: サイドバー要素とボタン
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggle-sidebar-btn');
+
         const geminiInput = document.getElementById('gemini-key');
         const openaiInput = document.getElementById('openai-key');
         const claudeInput = document.getElementById('claude-key');
@@ -106,15 +231,17 @@
         let loadedPrompts = [];
 
         async function init() {
-            // ★追加: モデル選択肢の生成
             initModelSelect();
-
             loadSettings();
             loadHistory();
             await loadPromptFiles();
         }
 
-        // ★新規: models.js をもとにプルダウンを作る関数
+        // ★追加: サイドバーの開閉処理
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+
         function initModelSelect() {
             modelSelect.innerHTML = '';
             modelList.forEach(model => {
@@ -128,7 +255,6 @@
         async function loadPromptFiles() {
             promptSelect.innerHTML = '';
             loadedPrompts = [];
-
             for (const item of promptRegistry) {
                 try {
                     const response = await fetch(item.file);
@@ -136,10 +262,9 @@
                     const textContent = await response.text();
                     addPromptToSystem(item.id, item.name, textContent);
                 } catch (error) {
-                    console.error(`プリセット読み込み失敗 (${item.file}):`, error);
+                    console.error(`プリセット読み込み失敗:`, error);
                 }
             }
-
             const savedPrompt = localStorage.getItem(STORAGE_KEYS.PROMPT);
             if (savedPrompt && loadedPrompts.find(p => p.id === savedPrompt)) {
                 promptSelect.value = savedPrompt;
@@ -149,7 +274,6 @@
         fileUpload.addEventListener('change', async (e) => {
             const files = e.target.files;
             if (!files || files.length === 0) return;
-
             for (const file of files) {
                 try {
                     const text = await file.text();
@@ -187,7 +311,6 @@
             if (savedGemini) geminiInput.value = savedGemini;
             if (savedOpenAI) openaiInput.value = savedOpenAI;
             if (savedClaude) claudeInput.value = savedClaude;
-            // モデルリスト生成後に値をセット
             if (savedModel)  modelSelect.value = savedModel;
 
             geminiInput.addEventListener('input', (e) => localStorage.setItem(STORAGE_KEYS.GEMINI, e.target.value));
@@ -211,7 +334,7 @@
                 }
             }
             if (messageHistory.length === 0) {
-                appendMessage('ai', 'こんにちは！設定からAPIキーを入力して開始してください。', false);
+                appendMessage('ai', 'こんにちは！左上の「☰」ボタンで設定メニューを開閉できます。', false);
             }
         }
 
@@ -239,23 +362,15 @@
 
             const selectedModelId = modelSelect.value;
             const promptId = promptSelect.value;
-            
             const systemPromptObj = loadedPrompts.find(p => p.id === promptId);
             const systemPrompt = systemPromptObj ? systemPromptObj.content : "";
-
-            // ★変更: models.js の情報を使ってプロバイダーを特定
-            // 配列からIDが一致する設定オブジェクトを探す
             const modelConfig = modelList.find(m => m.id === selectedModelId);
-            const provider = modelConfig ? modelConfig.provider : 'gemini'; // 見つからない場合はGemini
+            const provider = modelConfig ? modelConfig.provider : 'gemini';
 
             let apiKey = "";
-            if (provider === 'gemini') {
-                apiKey = geminiInput.value;
-            } else if (provider === 'openai') {
-                apiKey = openaiInput.value;
-            } else if (provider === 'claude') {
-                apiKey = claudeInput.value;
-            }
+            if (provider === 'gemini') apiKey = geminiInput.value;
+            else if (provider === 'openai') apiKey = openaiInput.value;
+            else if (provider === 'claude') apiKey = claudeInput.value;
 
             if (!apiKey) {
                 appendMessage('ai', `エラー: ${provider} のAPIキーが設定されていません。`, false);
@@ -270,19 +385,14 @@
 
             try {
                 let reply = "";
-                if (provider === 'gemini') {
-                    reply = await callGemini(apiKey, selectedModelId, messageHistory, systemPrompt);
-                } else if (provider === 'openai') {
-                    reply = await callOpenAI(apiKey, selectedModelId, messageHistory, systemPrompt);
-                } else if (provider === 'claude') {
-                    reply = await callClaude(apiKey, selectedModelId, messageHistory, systemPrompt);
-                }
+                if (provider === 'gemini') reply = await callGemini(apiKey, selectedModelId, messageHistory, systemPrompt);
+                else if (provider === 'openai') reply = await callOpenAI(apiKey, selectedModelId, messageHistory, systemPrompt);
+                else if (provider === 'claude') reply = await callClaude(apiKey, selectedModelId, messageHistory, systemPrompt);
 
                 chatContainer.removeChild(loadingDiv);
                 appendMessage('ai', reply, true);
                 messageHistory.push({ role: 'assistant', content: reply });
                 saveHistory();
-
             } catch (error) {
                 if(loadingDiv.parentNode) chatContainer.removeChild(loadingDiv);
                 appendMessage('ai', `エラー: ${error.message}`, false);
