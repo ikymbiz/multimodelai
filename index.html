@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Multi-Model AI Chat</title>
     <style>
         :root {
@@ -16,6 +16,7 @@
             --danger: #ff8b8b;
         }
 
+        /* 全体のレイアウト設定 */
         body {
             margin: 0;
             font-family: 'Helvetica Neue', Arial, sans-serif;
@@ -23,12 +24,14 @@
             color: var(--text-color);
             display: flex;
             height: 100vh;
-            overflow: hidden; /* 全体のスクロールを防ぐ */
+            height: 100dvh; /* モバイルブラウザのアドレスバー対策 */
+            overflow: hidden; /* 画面全体のスクロールを禁止 */
         }
 
-        /* Sidebar (Settings) */
+        /* --- サイドバー設定 --- */
         .sidebar {
             width: 260px;
+            min-width: 260px; /* 縮小を防ぐ */
             background-color: var(--sidebar-bg);
             padding: 20px;
             display: flex;
@@ -37,19 +40,21 @@
             border-right: 1px solid #444;
             overflow-y: auto;
             
-            /* ★追加: アニメーション設定 */
+            /* アニメーション設定 */
             transition: all 0.3s ease;
-            white-space: nowrap; /* 閉じる時に文字が改行されるのを防ぐ */
+            white-space: nowrap;
+            overflow-x: hidden; /* 横にはみ出した文字を隠す */
         }
 
-        /* ★追加: 折りたたみ時のスタイル */
+        /* 閉じた時のスタイル */
         .sidebar.collapsed {
             width: 0;
+            min-width: 0;
             padding-left: 0;
             padding-right: 0;
             border-right: none;
             opacity: 0;
-            pointer-events: none; /* 隠れているときはクリック不可に */
+            pointer-events: none;
         }
 
         .sidebar h2 { font-size: 1.2rem; margin-top: 0; }
@@ -92,66 +97,80 @@
             width: 100%;
         }
 
-        /* Main Chat Area */
+        /* --- メインチャットエリア設定 --- */
         .main-chat {
-            flex: 1;
+            flex: 1; /* 残りの幅を占有 */
             display: flex;
-            flex-direction: column;
+            flex-direction: column; /* 縦並びにする */
             position: relative;
-            min-width: 0; /* フレックスアイテムの縮小を許可 */
+            min-width: 0;
+            height: 100%; /* 高さ100%を確保 */
         }
 
-        /* ★追加: サイドバー切り替えボタン */
         #toggle-sidebar-btn {
             position: absolute;
             top: 15px;
             left: 15px;
             z-index: 100;
-            background: transparent;
+            background: rgba(30, 31, 32, 0.8); /* 文字と重なっても見やすく */
+            border-radius: 4px;
             border: none;
             color: #aaa;
             font-size: 1.5rem;
             cursor: pointer;
-            padding: 5px;
+            padding: 5px 10px;
             line-height: 1;
         }
-        #toggle-sidebar-btn:hover { color: white; }
+        #toggle-sidebar-btn:hover { color: white; background: #333; }
 
+        /* チャット履歴エリア（ここだけスクロールさせる） */
         .chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px 20%;
-            padding-top: 60px; /* ★変更: ボタンと重ならないよう上部に余白 */
+            flex: 1; /* 余った縦スペースを全て使う */
+            overflow-y: auto; /* 縦スクロール有効 */
+            padding: 20px 10%;
+            padding-top: 60px;
             display: flex;
             flex-direction: column;
             gap: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .chat-container { padding: 20px 5%; padding-top: 60px; }
-            /* スマホでサイドバーが開いている時は全画面覆う */
-            .sidebar { 
-                position: absolute; 
-                z-index: 200; 
-                height: 100%; 
-                width: 260px;
-            }
-            .sidebar.collapsed { width: 0; }
+            scroll-behavior: smooth;
         }
 
         .message { display: flex; gap: 15px; line-height: 1.6; }
         .message.user { justify-content: flex-end; }
-        .bubble { padding: 12px 18px; border-radius: 18px; max-width: 80%; white-space: pre-wrap; }
+        .bubble { padding: 12px 18px; border-radius: 18px; max-width: 80%; white-space: pre-wrap; word-break: break-word; }
         .message.user .bubble { background-color: var(--user-msg-bg); border-bottom-right-radius: 4px; }
         .message.ai .bubble { background-color: var(--ai-msg-bg); border-bottom-left-radius: 4px; }
         .icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; flex-shrink: 0; }
         .icon.ai { background: var(--accent); color: #000; }
 
-        .input-area { padding: 20px 20%; background-color: var(--bg-color); }
+        /* 入力エリア（画面下部に固定） */
+        .input-area {
+            flex-shrink: 0; /* 縮小させない */
+            padding: 20px 10%;
+            background-color: var(--bg-color);
+            border-top: 1px solid #333; /* 境界線を引く */
+            z-index: 10;
+        }
+
         .input-wrapper { background: var(--input-bg); border-radius: 25px; padding: 10px 20px; display: flex; align-items: center; }
-        textarea { flex: 1; background: transparent; border: none; color: white; resize: none; height: 24px; font-size: 1rem; outline: none; }
+        textarea { flex: 1; background: transparent; border: none; color: white; resize: none; height: 24px; font-size: 1rem; outline: none; max-height: 100px; }
         button#send-btn { background: transparent; border: none; color: var(--accent); cursor: pointer; font-size: 1.2rem; margin-left: 10px; }
         .loading { font-size: 0.8rem; color: #aaa; margin-left: 50px; }
+
+        /* モバイル対応 */
+        @media (max-width: 768px) {
+            .chat-container { padding: 20px 5%; padding-top: 60px; }
+            .input-area { padding: 15px 5%; }
+            
+            .sidebar { 
+                position: absolute; 
+                z-index: 200; 
+                height: 100%; 
+                width: 280px;
+                box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+            }
+            .sidebar.collapsed { width: 0; min-width: 0; }
+        }
     </style>
 </head>
 <body>
@@ -198,6 +217,7 @@
     </main>
 
     <script type="module">
+        // ※注意: 以下のモジュールパスはご利用環境に合わせてください
         import { promptRegistry } from './prompt.js';
         import { modelList } from './models.js';
         import { callGemini, callOpenAI, callClaude } from './api_client.js';
@@ -210,7 +230,6 @@
         const clearBtn = document.getElementById('clear-btn');
         const fileUpload = document.getElementById('file-upload');
         
-        // ★追加: サイドバー要素とボタン
         const sidebar = document.getElementById('sidebar');
         const toggleBtn = document.getElementById('toggle-sidebar-btn');
 
@@ -235,9 +254,14 @@
             loadSettings();
             loadHistory();
             await loadPromptFiles();
+            
+            // モバイルの場合は初期状態でサイドバーを閉じる
+            if (window.innerWidth <= 768) {
+                sidebar.classList.add('collapsed');
+            }
         }
 
-        // ★追加: サイドバーの開閉処理
+        // --- サイドバー開閉処理 ---
         toggleBtn.addEventListener('click', () => {
             sidebar.classList.toggle('collapsed');
         });
@@ -255,14 +279,17 @@
         async function loadPromptFiles() {
             promptSelect.innerHTML = '';
             loadedPrompts = [];
-            for (const item of promptRegistry) {
-                try {
-                    const response = await fetch(item.file);
-                    if (!response.ok) throw new Error(`Status ${response.status}`);
-                    const textContent = await response.text();
-                    addPromptToSystem(item.id, item.name, textContent);
-                } catch (error) {
-                    console.error(`プリセット読み込み失敗:`, error);
+            // promptRegistryが空または未定義の場合の対策
+            if (typeof promptRegistry !== 'undefined') {
+                for (const item of promptRegistry) {
+                    try {
+                        const response = await fetch(item.file);
+                        if (!response.ok) throw new Error(`Status ${response.status}`);
+                        const textContent = await response.text();
+                        addPromptToSystem(item.id, item.name, textContent);
+                    } catch (error) {
+                        console.error(`プリセット読み込み失敗:`, error);
+                    }
                 }
             }
             const savedPrompt = localStorage.getItem(STORAGE_KEYS.PROMPT);
@@ -357,6 +384,9 @@
 
             appendMessage('user', text, true);
             userInput.value = '';
+            // 高さリセット
+            userInput.style.height = '24px'; 
+            
             messageHistory.push({ role: 'user', content: text });
             saveHistory();
 
@@ -381,7 +411,7 @@
             loadingDiv.className = 'loading';
             loadingDiv.textContent = '生成中...';
             chatContainer.appendChild(loadingDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            scrollToBottom();
 
             try {
                 let reply = "";
@@ -389,7 +419,7 @@
                 else if (provider === 'openai') reply = await callOpenAI(apiKey, selectedModelId, messageHistory, systemPrompt);
                 else if (provider === 'claude') reply = await callClaude(apiKey, selectedModelId, messageHistory, systemPrompt);
 
-                chatContainer.removeChild(loadingDiv);
+                if(loadingDiv.parentNode) chatContainer.removeChild(loadingDiv);
                 appendMessage('ai', reply, true);
                 messageHistory.push({ role: 'assistant', content: reply });
                 saveHistory();
@@ -406,6 +436,10 @@
             html += `<div class="bubble">${text}</div>`;
             msgDiv.innerHTML = html;
             chatContainer.appendChild(msgDiv);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
@@ -415,6 +449,12 @@
                 e.preventDefault();
                 handleSend();
             }
+        });
+        
+        // 入力欄の自動伸縮
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
         });
 
         init();
