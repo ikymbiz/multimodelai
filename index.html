@@ -57,7 +57,26 @@
             pointer-events: none;
         }
 
-        .sidebar h2 { font-size: 1.2rem; margin-top: 0; }
+        /* サイドバーヘッダー（タイトルと閉じるボタン） */
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar h2 { font-size: 1.2rem; margin: 0; }
+        
+        /* 閉じるボタン（×） */
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: #aaa;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0 5px;
+            line-height: 1;
+        }
+        .close-btn:hover { color: white; }
         
         label { font-size: 0.8rem; color: #aaa; margin-bottom: 5px; display: block; }
         input[type="text"], input[type="password"], select {
@@ -170,13 +189,25 @@
                 box-shadow: 2px 0 10px rgba(0,0,0,0.5);
             }
             .sidebar.collapsed { width: 0; min-width: 0; }
+            
+            /* モバイルの時はメイン画面クリックでも閉じるようにする(任意) */
+            .main-chat.overlay-active::after {
+                content: '';
+                position: absolute;
+                top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 150;
+            }
         }
     </style>
 </head>
 <body>
 
     <aside class="sidebar" id="sidebar">
-        <h2>設定</h2>
+        <div class="sidebar-header">
+            <h2>設定</h2>
+            <button id="close-sidebar-btn" class="close-btn" title="閉じる">×</button>
+        </div>
         
         <label>プロバイダー & モデル</label>
         <select id="model-select"></select>
@@ -203,7 +234,7 @@
         <button id="clear-btn">🗑️ 会話履歴をクリア</button>
     </aside>
 
-    <main class="main-chat">
+    <main class="main-chat" id="main-chat">
         <button id="toggle-sidebar-btn">☰</button>
 
         <div class="chat-container" id="chat-container"></div>
@@ -232,6 +263,8 @@
         
         const sidebar = document.getElementById('sidebar');
         const toggleBtn = document.getElementById('toggle-sidebar-btn');
+        const closeSidebarBtn = document.getElementById('close-sidebar-btn'); // 追加
+        const mainChat = document.getElementById('main-chat');
 
         const geminiInput = document.getElementById('gemini-key');
         const openaiInput = document.getElementById('openai-key');
@@ -262,8 +295,21 @@
         }
 
         // --- サイドバー開閉処理 ---
-        toggleBtn.addEventListener('click', () => {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // イベント伝播を止める
             sidebar.classList.toggle('collapsed');
+        });
+
+        // 閉じるボタン（×）の処理
+        closeSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.add('collapsed');
+        });
+
+        // モバイルでメイン画面（チャット部分）をタップしたらサイドバーを閉じる
+        mainChat.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768 && !sidebar.classList.contains('collapsed')) {
+                sidebar.classList.add('collapsed');
+            }
         });
 
         function initModelSelect() {
