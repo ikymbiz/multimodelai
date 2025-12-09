@@ -5,150 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi-Model AI Chat</title>
     <style>
-        :root {
-            --bg-color: #131314;
-            --sidebar-bg: #1e1f20;
-            --text-color: #e3e3e3;
-            --input-bg: #282a2c;
-            --user-msg-bg: #004a77;
-            --ai-msg-bg: #282a2c;
-            --accent: #a8c7fa;
-            --danger: #ff8b8b;
-        }
-
-        body {
-            margin: 0;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            height: 100vh;
-        }
-
-        /* Sidebar (Settings) */
-        .sidebar {
-            width: 260px;
-            background-color: var(--sidebar-bg);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            border-right: 1px solid #444;
-            overflow-y: auto;
-        }
-
+        /* デザインは変更なし（省略して既存のCSSを適用してください） */
+        :root { --bg-color: #131314; --sidebar-bg: #1e1f20; --text-color: #e3e3e3; --input-bg: #282a2c; --user-msg-bg: #004a77; --ai-msg-bg: #282a2c; --accent: #a8c7fa; --danger: #ff8b8b; }
+        body { margin: 0; font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; height: 100vh; }
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid #444; overflow-y: auto; }
         .sidebar h2 { font-size: 1.2rem; margin-top: 0; }
-        
         label { font-size: 0.8rem; color: #aaa; margin-bottom: 5px; display: block; }
-        input, select {
-            width: 100%;
-            padding: 10px;
-            background: var(--input-bg);
-            border: 1px solid #444;
-            color: white;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-        }
-
-        /* 履歴クリアボタン */
-        #clear-btn {
-            background-color: transparent;
-            border: 1px solid var(--danger);
-            color: var(--danger);
-            padding: 8px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
+        input[type="text"], input[type="password"], select { width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid #444; color: white; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
+        .file-upload-label { display: inline-block; padding: 8px 12px; background: #333; border: 1px dashed #666; border-radius: 8px; cursor: pointer; text-align: center; font-size: 0.8rem; color: var(--accent); margin-bottom: 10px; }
+        .file-upload-label:hover { background: #444; }
+        input[type="file"] { display: none; }
+        #clear-btn { background-color: transparent; border: 1px solid var(--danger); color: var(--danger); padding: 8px; border-radius: 8px; cursor: pointer; margin-top: 20px; width: 100%; }
         #clear-btn:hover { background-color: rgba(255, 139, 139, 0.1); }
-
-        /* Main Chat Area */
-        .main-chat {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        .chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px 20%;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .message {
-            display: flex;
-            gap: 15px;
-            line-height: 1.6;
-        }
-
+        .main-chat { flex: 1; display: flex; flex-direction: column; position: relative; }
+        .chat-container { flex: 1; overflow-y: auto; padding: 20px 20%; display: flex; flex-direction: column; gap: 20px; }
+        @media (max-width: 768px) { .chat-container { padding: 20px 5%; } .sidebar { width: 220px; } .input-area { padding: 20px 5%; } }
+        .message { display: flex; gap: 15px; line-height: 1.6; }
         .message.user { justify-content: flex-end; }
-
-        .bubble {
-            padding: 12px 18px;
-            border-radius: 18px;
-            max-width: 80%;
-            white-space: pre-wrap;
-        }
-
-        .message.user .bubble {
-            background-color: var(--user-msg-bg);
-            border-bottom-right-radius: 4px;
-        }
-
-        .message.ai .bubble {
-            background-color: var(--ai-msg-bg);
-            border-bottom-left-radius: 4px;
-        }
-
-        .icon {
-            width: 30px; height: 30px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold;
-            font-size: 12px;
-            flex-shrink: 0;
-        }
+        .bubble { padding: 12px 18px; border-radius: 18px; max-width: 80%; white-space: pre-wrap; }
+        .message.user .bubble { background-color: var(--user-msg-bg); border-bottom-right-radius: 4px; }
+        .message.ai .bubble { background-color: var(--ai-msg-bg); border-bottom-left-radius: 4px; }
+        .icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; flex-shrink: 0; }
         .icon.ai { background: var(--accent); color: #000; }
-
-        /* Input Area */
-        .input-area {
-            padding: 20px 20%;
-            background-color: var(--bg-color);
-        }
-
-        .input-wrapper {
-            background: var(--input-bg);
-            border-radius: 25px;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-        }
-
-        textarea {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: white;
-            resize: none;
-            height: 24px;
-            font-size: 1rem;
-            outline: none;
-        }
-
-        button#send-btn {
-            background: transparent;
-            border: none;
-            color: var(--accent);
-            cursor: pointer;
-            font-size: 1.2rem;
-            margin-left: 10px;
-        }
-        
+        .input-area { padding: 20px 20%; background-color: var(--bg-color); }
+        .input-wrapper { background: var(--input-bg); border-radius: 25px; padding: 10px 20px; display: flex; align-items: center; }
+        textarea { flex: 1; background: transparent; border: none; color: white; resize: none; height: 24px; font-size: 1rem; outline: none; }
+        button#send-btn { background: transparent; border: none; color: var(--accent); cursor: pointer; font-size: 1.2rem; margin-left: 10px; }
         .loading { font-size: 0.8rem; color: #aaa; margin-left: 50px; }
     </style>
 </head>
@@ -158,17 +40,15 @@
         <h2>設定</h2>
         
         <label>プロバイダー & モデル</label>
-        <select id="model-select">
-            <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-            <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-            <option value="gpt-4o">OpenAI GPT-4o</option>
-            <option value="gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
-            <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet</option>
-        </select>
+        <select id="model-select"></select>
 
-        <label>システムプロンプト (役割)</label>
-        <select id="prompt-select">
-            </select>
+        <label>システムプロンプト</label>
+        <select id="prompt-select"></select>
+
+        <label for="file-upload" class="file-upload-label">
+            📂 プロンプトファイルを追加<br>(Androidローカル)
+        </label>
+        <input type="file" id="file-upload" accept=".txt" multiple>
 
         <hr style="width:100%; border:0; border-top:1px solid #444;">
 
@@ -196,8 +76,9 @@
     </main>
 
     <script type="module">
-        // ★修正点1: promptListではなく promptRegistry を読み込む
         import { promptRegistry } from './prompt.js';
+        // ★追加: models.js をインポート
+        import { modelList } from './models.js';
         import { callGemini, callOpenAI, callClaude } from './api_client.js';
 
         const chatContainer = document.getElementById('chat-container');
@@ -206,6 +87,7 @@
         const promptSelect = document.getElementById('prompt-select');
         const modelSelect = document.getElementById('model-select');
         const clearBtn = document.getElementById('clear-btn');
+        const fileUpload = document.getElementById('file-upload');
         
         const geminiInput = document.getElementById('gemini-key');
         const openaiInput = document.getElementById('openai-key');
@@ -221,20 +103,28 @@
         };
 
         let messageHistory = [];
-        // ★修正点2: 読み込んだファイルのテキストを保存する配列
         let loadedPrompts = [];
 
         async function init() {
-            // 設定読み込み
+            // ★追加: モデル選択肢の生成
+            initModelSelect();
+
             loadSettings();
-            // 履歴読み込み
             loadHistory();
-            
-            // ★修正点3: テキストファイルの読み込みを開始
             await loadPromptFiles();
         }
 
-        // ★修正点4: ファイル読み込み用の関数を追加
+        // ★新規: models.js をもとにプルダウンを作る関数
+        function initModelSelect() {
+            modelSelect.innerHTML = '';
+            modelList.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.id;
+                option.textContent = model.name;
+                modelSelect.appendChild(option);
+            });
+        }
+
         async function loadPromptFiles() {
             promptSelect.innerHTML = '';
             loadedPrompts = [];
@@ -244,27 +134,47 @@
                     const response = await fetch(item.file);
                     if (!response.ok) throw new Error(`Status ${response.status}`);
                     const textContent = await response.text();
-
-                    loadedPrompts.push({
-                        id: item.id,
-                        name: item.name,
-                        content: textContent.trim()
-                    });
-
-                    const option = document.createElement('option');
-                    option.value = item.id;
-                    option.textContent = item.name;
-                    promptSelect.appendChild(option);
-
+                    addPromptToSystem(item.id, item.name, textContent);
                 } catch (error) {
-                    console.error(`プロンプト読み込み失敗 (${item.file}):`, error);
+                    console.error(`プリセット読み込み失敗 (${item.file}):`, error);
                 }
             }
 
-            // プロンプトの選択状態を復元
             const savedPrompt = localStorage.getItem(STORAGE_KEYS.PROMPT);
             if (savedPrompt && loadedPrompts.find(p => p.id === savedPrompt)) {
                 promptSelect.value = savedPrompt;
+            }
+        }
+
+        fileUpload.addEventListener('change', async (e) => {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+
+            for (const file of files) {
+                try {
+                    const text = await file.text();
+                    const id = "custom-" + file.name;
+                    addPromptToSystem(id, "📂 " + file.name, text);
+                    promptSelect.value = id;
+                    localStorage.setItem(STORAGE_KEYS.PROMPT, id);
+                    appendMessage('ai', `ローカルファイル「${file.name}」を読み込みました。`, false);
+                } catch (err) {
+                    console.error("ファイル読み込みエラー", err);
+                }
+            }
+            fileUpload.value = '';
+        });
+
+        function addPromptToSystem(id, name, content) {
+            const existingIndex = loadedPrompts.findIndex(p => p.id === id);
+            if (existingIndex !== -1) {
+                loadedPrompts[existingIndex] = { id, name, content: content.trim() };
+            } else {
+                loadedPrompts.push({ id, name, content: content.trim() });
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = name;
+                promptSelect.appendChild(option);
             }
         }
 
@@ -277,6 +187,7 @@
             if (savedGemini) geminiInput.value = savedGemini;
             if (savedOpenAI) openaiInput.value = savedOpenAI;
             if (savedClaude) claudeInput.value = savedClaude;
+            // モデルリスト生成後に値をセット
             if (savedModel)  modelSelect.value = savedModel;
 
             geminiInput.addEventListener('input', (e) => localStorage.setItem(STORAGE_KEYS.GEMINI, e.target.value));
@@ -300,7 +211,7 @@
                 }
             }
             if (messageHistory.length === 0) {
-                appendMessage('ai', 'こんにちは！設定からAPIキーを入力して開始してください。テキストファイルの設定も読み込まれます。', false);
+                appendMessage('ai', 'こんにちは！設定からAPIキーを入力して開始してください。', false);
             }
         }
 
@@ -326,25 +237,28 @@
             messageHistory.push({ role: 'user', content: text });
             saveHistory();
 
-            const selectedModel = modelSelect.value;
+            const selectedModelId = modelSelect.value;
             const promptId = promptSelect.value;
             
-            // ★修正点5: loadedPrompts配列から検索する
             const systemPromptObj = loadedPrompts.find(p => p.id === promptId);
             const systemPrompt = systemPromptObj ? systemPromptObj.content : "";
 
+            // ★変更: models.js の情報を使ってプロバイダーを特定
+            // 配列からIDが一致する設定オブジェクトを探す
+            const modelConfig = modelList.find(m => m.id === selectedModelId);
+            const provider = modelConfig ? modelConfig.provider : 'gemini'; // 見つからない場合はGemini
+
             let apiKey = "";
-            let provider = "";
-            if (selectedModel.includes('gemini')) {
-                apiKey = geminiInput.value; provider = 'gemini';
-            } else if (selectedModel.includes('gpt')) {
-                apiKey = openaiInput.value; provider = 'openai';
-            } else if (selectedModel.includes('claude')) {
-                apiKey = claudeInput.value; provider = 'claude';
+            if (provider === 'gemini') {
+                apiKey = geminiInput.value;
+            } else if (provider === 'openai') {
+                apiKey = openaiInput.value;
+            } else if (provider === 'claude') {
+                apiKey = claudeInput.value;
             }
 
             if (!apiKey) {
-                appendMessage('ai', 'エラー: APIキーが設定されていません。', false);
+                appendMessage('ai', `エラー: ${provider} のAPIキーが設定されていません。`, false);
                 return;
             }
 
@@ -357,15 +271,14 @@
             try {
                 let reply = "";
                 if (provider === 'gemini') {
-                    reply = await callGemini(apiKey, selectedModel, messageHistory, systemPrompt);
+                    reply = await callGemini(apiKey, selectedModelId, messageHistory, systemPrompt);
                 } else if (provider === 'openai') {
-                    reply = await callOpenAI(apiKey, selectedModel, messageHistory, systemPrompt);
+                    reply = await callOpenAI(apiKey, selectedModelId, messageHistory, systemPrompt);
                 } else if (provider === 'claude') {
-                    reply = await callClaude(apiKey, selectedModel, messageHistory, systemPrompt);
+                    reply = await callClaude(apiKey, selectedModelId, messageHistory, systemPrompt);
                 }
 
                 chatContainer.removeChild(loadingDiv);
-                
                 appendMessage('ai', reply, true);
                 messageHistory.push({ role: 'assistant', content: reply });
                 saveHistory();
@@ -379,13 +292,8 @@
         function appendMessage(role, text, isNew = true) {
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${role}`;
-            
-            let html = '';
-            if (role === 'ai') {
-                html += `<div class="icon ai">AI</div>`;
-            }
+            let html = (role === 'ai') ? `<div class="icon ai">AI</div>` : '';
             html += `<div class="bubble">${text}</div>`;
-            
             msgDiv.innerHTML = html;
             chatContainer.appendChild(msgDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -400,7 +308,6 @@
         });
 
         init();
-
     </script>
 </body>
 </html>
