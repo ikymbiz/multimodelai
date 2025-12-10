@@ -7,6 +7,11 @@ export const promptRegistry = [
     },
     {
         id: "engineer",
+        name: "プロンプト作成",
+        file: "./prompts/prompt_creator.txt"
+    },
+    {
+        id: "engineer",
         name: "シニアエンジニア",
         file: "./prompts/engineer.txt"
     },
